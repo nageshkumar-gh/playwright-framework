@@ -20,6 +20,10 @@ jobs:
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright tests
+      env:
+          BASE_URL: ${{ secrets.BASE_URL }}        
+          USERNAME: ${{ secrets.USERNAME }}        
+          PASSWORD: ${{ secrets.PASSWORD }}        
       run: npx playwright test
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
@@ -27,3 +31,8 @@ jobs:
         name: playwright-report
         path: playwright-report/
         retention-days: 30
+
+env:
+    BASE_URL: 'https://opensource-demo.orangehrmlive.com'   
+    USERNAME: 'Admin'
+    PASSWORD: 'admin123'  

@@ -1,22 +1,23 @@
-import test,{expect} from '@playwright/test';
+import test,{expect} from '@playwright/test'
+import loginData from '../../test-data/login-data.json'
 
-test("valid login",
+test("Admin can login with valid credentials",
     async({page})=>
     {
-        await page.goto("https://opensource-demo.orangehrmlive.com/web/index.php/auth/login");
-        await page.getByPlaceholder('Username').fill("Admin");
-        await page.getByPlaceholder('Password').fill("admin123");
+        await page.goto("/");
+        await page.getByPlaceholder('Username').fill(process.env.USERNAME!);
+        await page.getByPlaceholder('Password').fill(process.env.PASSWORD!);
         await page.getByRole('button',{name:'Login'}).click();
         await expect(page.getByRole('heading', { name: "Dashboard" })).toBeVisible();
     }
 )
 
-test("invalid login",
+test("User sees error message with invalid username and password",
     async({page})=>
     {
-        await page.goto("https://opensource-demo.orangehrmlive.com/web/index.php/auth/login");
-        await page.getByPlaceholder('Username').fill("Admin");
-        await page.getByPlaceholder('Password').fill("admin");
+        await page.goto("/");
+        await page.getByPlaceholder('Username').fill(loginData.invalidUser.username);
+        await page.getByPlaceholder('Password').fill(loginData.invalidUser.password);
         await page.getByRole('button',{name:'Login'}).click();
         await expect(page.getByText('Invalid credentials')).toBeVisible();
     }

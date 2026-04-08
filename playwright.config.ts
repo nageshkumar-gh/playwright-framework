@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();  // ← must be before defineConfig()
+
 import { defineConfig, devices } from '@playwright/test';
 
 /**
@@ -14,7 +17,7 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
   /* Run tests in files in parallel */
-  fullyParallel: true,
+  fullyParallel: false,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
@@ -27,8 +30,9 @@ export default defineConfig({
   timeout: 60000, // 60s per test globally
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
-    // baseURL: 'http://localhost:3000',
-    headless: true,
+    //baseURL: process.env.BASE_URL || 'https://opensource-demo.orangehrmlive.com',
+    baseURL: process.env.BASE_URL,
+    headless: false,
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
   },
