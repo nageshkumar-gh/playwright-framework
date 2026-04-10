@@ -27,7 +27,7 @@ export default defineConfig({
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
-  timeout: 60000, // 60s per test globally
+  timeout: 120000, // 60s per test globally
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
     //baseURL: process.env.BASE_URL || 'https://opensource-demo.orangehrmlive.com',

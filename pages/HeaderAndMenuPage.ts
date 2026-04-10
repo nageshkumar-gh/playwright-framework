@@ -10,7 +10,11 @@ export class HeaderAndMenuPage extends BasePage{
     }
     public async clickLogout()
     {
-        this.page.locator("//span[@class='oxd-userdropdown-tab']/i").click();
-        this.page.getByText('Logout').click();
+        await this.page.locator("//span[@class='oxd-userdropdown-tab']/i").click();
+        await this.page.getByText('Logout').click();
+    }
+    public async selectMenuTitle(menuName:string)
+    {
+        await this.page.getByRole('link',{name:menuName}).click();
     }
 }

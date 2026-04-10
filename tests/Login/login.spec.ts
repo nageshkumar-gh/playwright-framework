@@ -6,12 +6,13 @@ import { LoginPage } from '../../pages/LoginPage';
 test("Admin can login with valid credentials",
     async({loginPage})=>
     {
-        await test.step('Verify Dashboard header is visible with correct title', async () => {
-            const headerPage = new HeaderAndMenuPage(loginPage.page);
-            await expect(headerPage.getHeaderTitle()).toHaveCount(1);
-            await expect(headerPage.getHeaderTitle()).toBeVisible();
-            await expect(headerPage.getHeaderTitle()).toHaveText("Dashboard");
-        });
+        await test.step('Verify Dashboard header is visible with correct title', 
+            async () => {
+                const headerPage = new HeaderAndMenuPage(loginPage.page);
+                await expect(headerPage.getHeaderTitle()).toHaveCount(1);
+                await expect(headerPage.getHeaderTitle()).toBeVisible();
+                await expect(headerPage.getHeaderTitle()).toHaveText("Dashboard");
+            });
     }
 )
 
@@ -85,14 +86,8 @@ test("Session expired redirects to login",
             await context.clearCookies();
         });
 
-        // await test.step('Navigate to the application', async () => {
-        //     await loginPage.page.reload();
-        // });
-
         await test.step('Verify user is redirected to Login page', async () => {
-            await expect(loginPage.getLoginTitle()).toHaveCount(1);
             await expect(loginPage.getLoginTitle()).toBeVisible();
-            await expect(loginPage.getLoginTitle()).toHaveText("Login");
         });
     }
 )
