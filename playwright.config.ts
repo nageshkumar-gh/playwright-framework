@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();  // ← must be before defineConfig()
 
 import { defineConfig, devices } from '@playwright/test';
+import { on } from 'node:cluster';
 
 /**
  * Read environment variables from file.
@@ -17,11 +18,11 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
   /* Run tests in files in parallel */
-  fullyParallel: false,
+  fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 2 : 3,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
@@ -34,7 +35,10 @@ export default defineConfig({
     baseURL: process.env.BASE_URL,
     headless: true,
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    trace: 'on-all-retries',
+    /*Take failure screenshots */
+    screenshot: 'only-on-failure'
+
   },
 
   /* Configure projects for major browsers */
