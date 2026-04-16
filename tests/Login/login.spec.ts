@@ -89,5 +89,6 @@ test("Session expired redirects to login",
         await test.step('Verify user is redirected to Login page', async () => {
             await expect(loginPage.getLoginTitle()).toBeVisible();
         });
+        
     }
 )
