@@ -1,10 +1,8 @@
-name: Playwright Tests (Docker)
+name: Playwright Tests on Kubernetes (Kind)
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -13,25 +11,59 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      # 1. Checkout code (required)
+      # 1. Checkout code
       - name: Checkout repository
         uses: actions/checkout@v4
 
       # 2. Build Docker image
       - name: Build Docker image
-        run: docker build -t pw-test .
+        run: docker build -t pw-test:latest .
 
-      # 3. Run tests + generate report (using volume mount)
-      - name: Run Playwright tests in Docker
+      # 3. Install Kind
+      - name: Install Kind
         run: |
-          docker run --rm \
-            -e BASE_URL=${{ secrets.BASE_URL }} \
-            -e USERNAME=${{ secrets.USERNAME }} \
-            -e PASSWORD=${{ secrets.PASSWORD }} \
-            -v ${{ github.workspace }}/playwright-report:/app/playwright-report \
-            pw-test
+          curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
+          chmod +x ./kind
+          sudo mv ./kind /usr/local/bin/kind
 
-      # 4. Upload Playwright report
+      # 4. Create Kubernetes cluster
+      - name: Create Kind cluster
+        run: kind create cluster
+
+      # 5. Load Docker image into Kind
+      - name: Load image into cluster
+        run: kind load docker-image pw-test:latest
+
+      # 6. Create Kubernetes secret (test data)
+      - name: Create test secret
+        run: |
+          kubectl create secret generic playwright-secret \
+            --from-literal=base_url=${{ secrets.BASE_URL }} \
+            --from-literal=username=${{ secrets.USERNAME }} \
+            --from-literal=password=${{ secrets.PASSWORD }}
+
+      # 7. Run Kubernetes Job
+      - name: Run Playwright Job
+        run: |
+          kubectl delete job playwright-tests --ignore-not-found
+          kubectl apply -f pw-k8s-job.yaml
+
+      # 8. Wait for completion
+      - name: Wait for Job
+        run: |
+          kubectl wait --for=condition=complete job/playwright-tests --timeout=600s
+
+      # 9. Get logs
+      - name: Fetch logs
+        run: kubectl logs job/playwright-tests
+
+      # 10. Copy Playwright report from Pod
+      - name: Copy Playwright report
+        run: |
+          POD_NAME=$(kubectl get pods --selector=job-name=playwright-tests -o jsonpath='{.items[0].metadata.name}')
+          kubectl cp $POD_NAME:/app/playwright-report ./playwright-report || echo "No report found"
+
+      # 11. Upload report
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

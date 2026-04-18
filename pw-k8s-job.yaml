@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: playwright-tests
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: playwright
+          image: pw-test:latest   # ← local image loaded into Kind
+          env:
+            - name: BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: playwright-secret
+                  key: base_url
+            - name: USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: playwright-secret
+                  key: username
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: playwright-secret
+                  key: password
