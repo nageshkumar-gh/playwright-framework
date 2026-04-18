@@ -9,7 +9,8 @@ spec:
       restartPolicy: Never
       containers:
         - name: playwright
-          image: pw-test:latest   # ← local image loaded into Kind
+          image: pw-test:latest
+          imagePullPolicy: Never   
           env:
             - name: BASE_URL
               valueFrom:

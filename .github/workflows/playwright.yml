@@ -30,11 +30,15 @@ jobs:
       - name: Create Kind cluster
         run: kind create cluster
 
-      # 5. Load Docker image into Kind
+      # 5. Wait for cluster readiness (IMPORTANT FIX)
+      - name: Wait for cluster readiness
+        run: kubectl wait --for=condition=Ready nodes --all --timeout=120s
+
+      # 6. Load Docker image into Kind
       - name: Load image into cluster
         run: kind load docker-image pw-test:latest
 
-      # 6. Create Kubernetes secret (test data)
+      # 7. Create Kubernetes secret (test data)
       - name: Create test secret
         run: |
           kubectl create secret generic playwright-secret \
@@ -42,16 +46,23 @@ jobs:
             --from-literal=username=${{ secrets.USERNAME }} \
             --from-literal=password=${{ secrets.PASSWORD }}
 
-      # 7. Run Kubernetes Job
+      # 8. Run Kubernetes Job
       - name: Run Playwright Job
         run: |
           kubectl delete job playwright-tests --ignore-not-found
           kubectl apply -f pw-k8s-job.yaml
-      
-      #    
-      - name: Check Pods
-        run: kubectl get pods -o wide
 
+      # 9. Check Pods (quick visibility)
+      - name: Check Pods
+        run: kubectl get pods -o wide --watch=false
+
+      # 10. Wait for completion (handles success + failure)
+      - name: Wait for Job
+        run: |
+          kubectl wait --for=condition=complete job/playwright-tests --timeout=600s || \
+          kubectl wait --for=condition=failed job/playwright-tests --timeout=1s
+
+      # 11. Debug if failure
       - name: Debug Pods
         if: failure()
         run: |
@@ -62,24 +73,21 @@ jobs:
           kubectl describe pod $(kubectl get pods -o name)
 
           echo "==== LOGS ===="
-          kubectl logs $(kubectl get pods -o name) || true  
+          kubectl logs $(kubectl get pods -o name) || true
 
-      # 8. Wait for completion
-      - name: Wait for Job
-        run: |
-          kubectl wait --for=condition=complete job/playwright-tests --timeout=600s
-
-      # 9. Get logs
+      # 12. Fetch logs (always useful)
       - name: Fetch logs
-        run: kubectl logs job/playwright-tests
+        run: |
+          POD_NAME=$(kubectl get pods --selector=job-name=playwright-tests -o jsonpath='{.items[0].metadata.name}')
+          kubectl logs $POD_NAME
 
-      # 10. Copy Playwright report from Pod
+      # 13. Copy Playwright report from Pod
       - name: Copy Playwright report
         run: |
           POD_NAME=$(kubectl get pods --selector=job-name=playwright-tests -o jsonpath='{.items[0].metadata.name}')
           kubectl cp $POD_NAME:/app/playwright-report ./playwright-report || echo "No report found"
 
-      # 11. Upload report
+      # 14. Upload report
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
@@ -87,3 +95,8 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+
+      # 15. Cleanup cluster (optional but clean)
+      - name: Cleanup cluster
+        if: always()
+        run: kind delete cluster
