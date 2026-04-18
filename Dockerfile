@@ -1,7 +1,8 @@
 # Dockerfile for Playwright application
-FROM node:20-bookworm
+#FROM node:20-bookworm
 
-RUN npx -y playwright@1.59.1 install --with-deps
+#RUN npx -y playwright@1.59.1 install --with-deps
+FROM mcr.microsoft.com/playwright:v1.59.1-noble
 
 # Set the working directory in the container
 WORKDIR /app
@@ -18,8 +19,7 @@ COPY . .
 # Set environment variable for CI mode - this is a CI/non-interactive environment
 ENV CI=true
 
-ENTRYPOINT [ "npx", "playwright", "test" ]
-
+CMD [ "npx", "playwright", "test" ]
 
 
 
