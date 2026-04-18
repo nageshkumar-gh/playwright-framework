@@ -47,6 +47,22 @@ jobs:
         run: |
           kubectl delete job playwright-tests --ignore-not-found
           kubectl apply -f pw-k8s-job.yaml
+      
+      #    
+      - name: Check Pods
+        run: kubectl get pods -o wide
+
+      - name: Debug Pods
+        if: failure()
+        run: |
+          echo "==== PODS ===="
+          kubectl get pods -o wide
+
+          echo "==== DESCRIBE POD ===="
+          kubectl describe pod $(kubectl get pods -o name)
+
+          echo "==== LOGS ===="
+          kubectl logs $(kubectl get pods -o name) || true  
 
       # 8. Wait for completion
       - name: Wait for Job
