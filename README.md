@@ -323,8 +323,62 @@ docker run --rm \
 | Backoff limit | `0` (no K8s-level retries) |
 | Restart policy | `Never` |
 | Image pull policy | `Never` (uses pre-loaded local image) |
-| Credentials | Injected from `playwright-secret` |
+| Credentials | Injected from `kubectl create secret` |
 | Report output | Copied to shared volume → extracted by CI |
+
+### Report Extraction Flow
+
+Because the test pod runs inside a Kind (Kubernetes-in-Docker) node, the report cannot be fetched with `kubectl cp` alone. The following steps bridge the gap between the pod and the GitHub Actions runner:
+
+**Step 1 — Run tests & capture exit code (inside the pod)**
+
+The pod entrypoint runs `npx playwright test` and saves the exit code before doing anything else, so the report copy always happens regardless of pass/fail:
+
+```bash
+npx playwright test; TEST_EXIT_CODE=$?
+```
+
+**Step 2 — Copy report to the shared `hostPath` volume (inside the pod)**
+
+`pw-k8s-job.yaml` mounts a `hostPath` volume at `/shared` inside the container, backed by `/tmp/playwright-report` on the Kind node's filesystem. The pod copies the generated report there:
+
+```bash
+mkdir -p /shared/report
+cp -r playwright-report/* /shared/report/
+exit $TEST_EXIT_CODE   # preserve pass/fail signal
+```
+
+**Step 3 — Stream report from Kind node to the runner (GitHub Actions)**
+
+After the Job completes, the CI workflow reaches into the Kind control-plane container using `docker exec` and streams the report out via `tar`:
+
+```bash
+# Verify the report landed on the node
+docker exec kind-control-plane ls -la /tmp/playwright-report/report
+
+# Create destination on the runner
+mkdir -p playwright-report
+
+# Stream files out of the Kind node directly to the runner
+docker exec kind-control-plane \
+  tar -cf - -C /tmp/playwright-report/report . \
+  | tar -xf - -C playwright-report/
+```
+
+**Step 4 — Upload as a GitHub Actions artifact**
+
+The extracted `playwright-report/` directory is uploaded with `actions/upload-artifact@v4` and retained for **30 days**:
+
+```yaml
+- uses: actions/upload-artifact@v4
+  if: always()
+  with:
+    name: playwright-report
+    path: playwright-report/
+    retention-days: 30
+```
+
+> The `if: always()` guard ensures the report is uploaded whether tests pass or fail.
 
 ---
 
