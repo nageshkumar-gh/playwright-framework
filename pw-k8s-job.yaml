@@ -14,12 +14,42 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              echo "Running Playwright tests...";
+              echo "=== STEP 1: Running Playwright tests ===";
               npx playwright test;
+              TEST_EXIT_CODE=$?
+              echo "Playwright tests completed with exit code: $TEST_EXIT_CODE";
 
-              echo "Copying report to shared volume...";
-              mkdir -p /shared;
-              cp -r playwright-report/* /shared/ || echo "No report found";
+              echo "=== STEP 2: Checking if playwright-report exists locally ===";
+              if [ -d "playwright-report" ]; then
+                echo "SUCCESS: playwright-report directory exists in the container.";
+                echo "Contents of local playwright-report:";
+                ls -la playwright-report;
+              else
+                echo "WARNING: playwright-report directory does NOT exist locally!";
+              fi
+
+              echo "=== STEP 3: Checking if /shared volume is mounted ===";
+              if [ -d "/shared" ]; then
+                echo "SUCCESS: /shared volume mount is present.";
+              else
+                echo "ERROR: /shared volume mount is missing!";
+              fi
+
+              echo "=== STEP 4: Copying report to /shared/report ===";
+              mkdir -p /shared/report;
+              echo "Directory /shared/report created.";
+              
+              if cp -r playwright-report/* /shared/report/ 2>/dev/null; then
+                echo "SUCCESS: Copied report files to /shared/report.";
+              else
+                echo "WARNING: No files copied (directory might be empty or missing).";
+              fi
+
+              echo "=== STEP 5: Verifying /shared/report contents ===";
+              ls -la /shared/report;
+
+              echo "=== STEP 6: Exiting container ===";
+              exit $TEST_EXIT_CODE
 
           volumeMounts:
             - name: report-volume
