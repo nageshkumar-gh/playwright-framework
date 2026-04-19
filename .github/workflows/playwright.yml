@@ -73,10 +73,10 @@ jobs:
           kubectl logs $POD_NAME
 
       # 12. Copy report from hostPath
-      - name: Copy report from host
+      - name: Copy report from Kind node
         run: |
-          mkdir -p playwright-report
-          cp -r /tmp/playwright-report/* ./playwright-report || echo "No report found"
+          # Copy from Kind container to runner
+          docker cp kind-control-plane:/tmp/playwright-report ./playwright-report || echo "No report found"
 
       # 13. Upload report
       - name: Upload Playwright report
