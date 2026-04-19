@@ -52,11 +52,11 @@ jobs:
           kubectl delete job playwright-tests --ignore-not-found
           kubectl apply -f pw-k8s-job.yaml
 
-      # 9. Wait for completion
+      # 9. Wait for completion (Now accurately tracks failures)
       - name: Wait for Job
         run: |
           kubectl wait --for=condition=complete job/playwright-tests --timeout=600s || \
-          kubectl wait --for=condition=failed job/playwright-tests --timeout=1s
+          (kubectl wait --for=condition=failed job/playwright-tests --timeout=1s && exit 1)
 
       # 10. Debug on failure
       - name: Debug Pods
@@ -74,14 +74,18 @@ jobs:
 
       # 12. Copy report from hostPath
       - name: Copy report from Kind node
+        if: always() # CRITICAL: Run this step even if Step 9 fails
         run: |
-          # Copy from Kind container to runner
-          docker cp kind-control-plane:/tmp/playwright-report ./playwright-report || echo "No report found"
+          # 1. Fix permissions inside the Kind container so the runner can read it
+          docker exec kind-control-plane chmod -R 777 /tmp/playwright-report
+          
+          # 2. Copy the explicit report folder out of the Kind node
+          docker cp kind-control-plane:/tmp/playwright-report/report ./playwright-report || echo "No report found"
 
       # 13. Upload report
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
+        if: always() # CRITICAL: Upload the artifact regardless of test outcome
         with:
           name: playwright-report
           path: playwright-report/
