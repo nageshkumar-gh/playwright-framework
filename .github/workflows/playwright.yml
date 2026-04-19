@@ -77,18 +77,17 @@ jobs:
         if: always()
         run: |
           echo "--- Directory contents inside Kind node ---"
-          docker exec kind-control-plane ls -la /tmp/playwright-report || echo "Base directory not found!"
+          docker exec kind-control-plane ls -la /tmp/playwright-report/report || echo "Report directory not found!"
           
-          # 1. Fix permissions so the runner can read it (using || true to ignore errors if empty)
-          docker exec kind-control-plane chmod -R 777 /tmp/playwright-report || true
-          
-          # 2. Copy the entire /tmp/playwright-report directory (safest approach)
-          # We copy it to a temp folder first to avoid nesting issues
-          docker cp kind-control-plane:/tmp/playwright-report ./temp-report || echo "No report found"
-          
-          # 3. Move the contents into the directory expected by the upload artifact step
+          # 1. Create the destination directory on the GitHub Actions runner
           mkdir -p playwright-report
-          cp -r temp-report/* playwright-report/ 2>/dev/null || true
+          
+          # 2. Use tar to stream the files from the Kind node directly to the runner
+          echo "Extracting files using tar stream..."
+          docker exec kind-control-plane tar -cf - -C /tmp/playwright-report/report . | tar -xf - -C playwright-report/ || echo "Failed to extract files."
+          
+          echo "--- Local runner directory contents ---"
+          ls -la playwright-report/
 
       # 13. Upload report
       - name: Upload Playwright report
