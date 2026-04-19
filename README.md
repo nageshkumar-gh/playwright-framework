@@ -1,6 +1,36 @@
 # playwright-framework
-> UI test automation platform built with Playwright & TypeScript,
-> targeting OrangeHRM — a real-world HR management application.
+
+> End-to-end UI test automation platform built with **Playwright & TypeScript**, targeting **OrangeHRM** — a real-world HR management application. Tests run locally, in Docker, and inside a **Kubernetes** cluster via GitHub Actions CI/CD.
+
+<p align="center">
+  <a href="https://playwright.dev/">
+    <img src="https://img.shields.io/badge/Playwright-1.59.1-45ba4b?style=for-the-badge&logo=playwright&logoColor=white" alt="Playwright"/>
+  </a>
+  <a href="https://www.typescriptlang.org/">
+    <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"/>
+  </a>
+  <a href="https://nodejs.org/">
+    <img src="https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js"/>
+  </a>
+  <a href="https://www.docker.com/">
+    <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>
+  </a>
+  <a href="https://kubernetes.io/">
+    <img src="https://img.shields.io/badge/Kubernetes-Kind-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" alt="Kubernetes"/>
+  </a>
+  <a href="https://github.com/features/actions">
+    <img src="https://img.shields.io/badge/GitHub_Actions-CI%2FCD-2088FF?style=for-the-badge&logo=github-actions&logoColor=white" alt="GitHub Actions"/>
+  </a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Chromium-✓-4285F4?style=flat-square&logo=googlechrome&logoColor=white" alt="Chromium"/>
+  <img src="https://img.shields.io/badge/Firefox-✓-FF7139?style=flat-square&logo=firefox&logoColor=white" alt="Firefox"/>
+  <img src="https://img.shields.io/badge/WebKit-✓-000000?style=flat-square&logo=safari&logoColor=white" alt="WebKit"/>
+  <img src="https://img.shields.io/badge/Tests-Parallel-brightgreen?style=flat-square" alt="Parallel"/>
+  <img src="https://img.shields.io/badge/Pattern-Page_Object_Model-blueviolet?style=flat-square" alt="POM"/>
+  <img src="https://img.shields.io/badge/Reports-HTML-orange?style=flat-square" alt="HTML Reports"/>
+</p>
 
 ---
 
@@ -27,12 +57,16 @@
 
 This framework automates end-to-end UI testing for [OrangeHRM](https://www.orangehrm.com/), an open-source HR management system. It is built with:
 
-- **[Playwright](https://playwright.dev/)** — cross-browser end-to-end testing
-- **TypeScript** — type-safe test authoring
-- **Page Object Model** — maintainable, reusable page abstractions
-- **Custom Fixtures** — shared setup/teardown across tests
-- **Docker + Kubernetes** — containerised, portable test execution
-- **GitHub Actions** — automated CI/CD with artifact publishing
+| Layer | Technology |
+|-------|-----------|
+| Test runner | [Playwright](https://playwright.dev/) v1.59.1 |
+| Language | TypeScript (strict mode) |
+| Design pattern | Page Object Model |
+| Test isolation | Custom Playwright fixtures |
+| Containerisation | Docker (`mcr.microsoft.com/playwright:v1.59.1-noble`) |
+| Orchestration | Kubernetes (Kind in CI) |
+| CI/CD | GitHub Actions |
+| Reporting | Playwright HTML Reporter + GitHub Artifacts |
 
 ---
 
@@ -98,12 +132,12 @@ playwright-framework/
 
 ## Prerequisites
 
-| Tool | Minimum Version |
-|------|----------------|
-| Node.js | 18 LTS |
-| npm | 9+ |
-| Docker | 24+ (for containerised runs) |
-| Kind | 0.20+ (for Kubernetes runs) |
+| Tool | Minimum Version | Purpose |
+|------|----------------|---------|
+| ![Node.js](https://img.shields.io/badge/-Node.js-339933?logo=nodedotjs&logoColor=white&style=flat-square) | 18 LTS | Runtime |
+| ![npm](https://img.shields.io/badge/-npm-CB3837?logo=npm&logoColor=white&style=flat-square) | 9+ | Package management |
+| ![Docker](https://img.shields.io/badge/-Docker-2496ED?logo=docker&logoColor=white&style=flat-square) | 24+ | Containerised runs |
+| ![Kind](https://img.shields.io/badge/-Kind-326CE5?logo=kubernetes&logoColor=white&style=flat-square) | 0.20+ | Local Kubernetes cluster |
 
 ---
 
@@ -135,7 +169,7 @@ PASSWORD=Selenium@123456         # Valid admin password
 
 `playwright.config.ts` reads these variables via `dotenv` and applies them to every test run.
 
-### Key Playwright settings
+### Key Playwright Settings
 
 | Setting | Value |
 |---------|-------|
@@ -204,6 +238,7 @@ All page objects live in [`pages/`](pages/) and extend `BasePage`.
 Holds the Playwright `Page` instance and is the single inheritance point for all page objects.
 
 ### [LoginPage.ts](pages/LoginPage.ts)
+
 | Method | Description |
 |--------|-------------|
 | `setUsername(username)` | Types into the username field |
@@ -213,6 +248,7 @@ Holds the Playwright `Page` instance and is the single inheritance point for all
 | `getErrorMsg()` | Returns the error alert locator |
 
 ### [HeaderAndMenuPage.ts](pages/HeaderAndMenuPage.ts)
+
 | Method | Description |
 |--------|-------------|
 | `getHeaderTitle()` | Returns the dashboard header locator |
@@ -220,6 +256,7 @@ Holds the Playwright `Page` instance and is the single inheritance point for all
 | `selectMenuTitle(menuName)` | Clicks a top-level navigation menu item |
 
 ### [PimPage.ts](pages/PimPage.ts)
+
 | Method | Description |
 |--------|-------------|
 | `clickAddEmp()` | Clicks the "Add Employee" button |
@@ -275,25 +312,44 @@ test('some authenticated test', async ({ loginPage }) => {
 
 The GitHub Actions workflow at [.github/workflows/playwright.yml](.github/workflows/playwright.yml) runs on every push to `main` and on manual dispatch.
 
-### Pipeline steps
-
 ```
-1. Checkout repository
-2. Build Docker image  →  pw-test:latest
-3. Install Kind (Kubernetes-in-Docker)
-4. Create local Kubernetes cluster
-5. Wait for cluster nodes to become Ready
-6. Load Docker image into Kind cluster
-7. Create Kubernetes Secret from GitHub secrets
-       (BASE_URL, USERNAME, PASSWORD)
-8. Apply Kubernetes Job  →  pw-k8s-job.yaml
-9. Monitor pod status
-10. Wait for Job completion (success or failure)
-11. Collect debug output on failure
-12. Stream pod logs
-13. Copy playwright-report/ from pod
-14. Upload report as GitHub Actions artifact (30-day retention)
-15. Tear down Kind cluster
+Trigger: push to main / workflow_dispatch
+          │
+          ▼
+  ┌───────────────────┐
+  │  Build Docker     │  pw-test:latest
+  │  Image            │
+  └────────┬──────────┘
+           │
+           ▼
+  ┌───────────────────┐
+  │  Create Kind      │  Local K8s cluster
+  │  Cluster          │
+  └────────┬──────────┘
+           │
+           ▼
+  ┌───────────────────┐
+  │  Load Image &     │  Inject secrets:
+  │  Deploy Job       │  BASE_URL / USERNAME / PASSWORD
+  └────────┬──────────┘
+           │
+           ▼
+  ┌───────────────────┐
+  │  Monitor Pod &    │  Timeout: 600s
+  │  Wait for Done    │
+  └────────┬──────────┘
+           │
+           ▼
+  ┌───────────────────┐
+  │  Copy Report &    │  playwright-report/
+  │  Upload Artifact  │  Retained: 30 days
+  └────────┬──────────┘
+           │
+           ▼
+  ┌───────────────────┐
+  │  Teardown Kind    │
+  │  Cluster          │
+  └───────────────────┘
 ```
 
 ### Required GitHub Secrets
@@ -310,6 +366,8 @@ The GitHub Actions workflow at [.github/workflows/playwright.yml](.github/workfl
 
 ### Docker
 
+[![Docker](https://img.shields.io/badge/Base_Image-playwright%3Av1.59.1--noble-2496ED?style=flat-square&logo=docker&logoColor=white)](https://mcr.microsoft.com/en-us/artifact/mar/playwright)
+
 The [Dockerfile](Dockerfile) uses the official Playwright base image which ships with all required browser binaries and OS dependencies.
 
 ```bash
@@ -324,8 +382,6 @@ docker run --rm \
   pw-test:latest
 ```
 
-**Base image:** `mcr.microsoft.com/playwright:v1.59.1-noble`
-
 ### Kubernetes
 
 [pw-k8s-job.yaml](pw-k8s-job.yaml) defines a one-shot Kubernetes Job:
@@ -337,6 +393,7 @@ docker run --rm \
 | Restart policy | `Never` |
 | Image pull policy | `Never` (uses pre-loaded local image) |
 | Credentials | Injected from `playwright-secret` |
+| Report output | Copied to shared volume → extracted by CI |
 
 ---
 
@@ -348,3 +405,12 @@ After a test run:
 - **CI:** Download the `playwright-report` artifact from the GitHub Actions run summary (retained for 30 days)
 
 Traces (`.zip` files with DOM snapshots, network logs, and screenshots) are collected on every retry and are viewable at [trace.playwright.dev](https://trace.playwright.dev/).
+
+---
+
+<p align="center">
+  Built with ❤️ using
+  <a href="https://playwright.dev/">Playwright</a> ·
+  <a href="https://www.typescriptlang.org/">TypeScript</a> ·
+  <a href="https://docs.github.com/en/actions">GitHub Actions</a>
+</p>
