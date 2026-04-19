@@ -10,7 +10,21 @@ spec:
       containers:
         - name: playwright
           image: pw-test:latest
-          imagePullPolicy: Never   
+          imagePullPolicy: Never
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Running Playwright tests...";
+              npx playwright test;
+
+              echo "Copying report to shared volume...";
+              mkdir -p /shared;
+              cp -r playwright-report/* /shared/ || echo "No report found";
+
+          volumeMounts:
+            - name: report-volume
+              mountPath: /shared
+
           env:
             - name: BASE_URL
               valueFrom:
@@ -27,3 +41,9 @@ spec:
                 secretKeyRef:
                   name: playwright-secret
                   key: password
+
+      volumes:
+        - name: report-volume
+          hostPath:
+            path: /tmp/playwright-report
+            type: DirectoryOrCreate
