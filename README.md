@@ -1,6 +1,6 @@
 # playwright-framework
 
-> UI test automation platform built with **Playwright & TypeScript**, targeting **OrangeHRM** — a real-world HR management application. Tests run locally, in Docker, and inside a **Kubernetes** cluster via GitHub Actions CI/CD.
+> UI test automation platform built with **Playwright & TypeScript**, targeting **OrangeHRM** — a real-world HR management application. Tests run locally, in **Docker**, and inside a **Kubernetes** cluster via **GitHub Actions** CI/CD.
 
 <p align="center">
   <a href="https://playwright.dev/">
