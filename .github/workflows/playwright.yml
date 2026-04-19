@@ -3,6 +3,9 @@ name: Playwright Tests on Kubernetes (Kind)
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+      - 'image.png'
   workflow_dispatch:
 
 jobs:
