@@ -1,6 +1,6 @@
 # playwright-framework
 
-> End-to-end UI test automation platform built with **Playwright & TypeScript**, targeting **OrangeHRM** — a real-world HR management application. Tests run locally, in Docker, and inside a **Kubernetes** cluster via GitHub Actions CI/CD.
+> UI test automation platform built with **Playwright & TypeScript**, targeting **OrangeHRM** — a real-world HR management application. Tests run locally, in Docker, and inside a **Kubernetes** cluster via GitHub Actions CI/CD.
 
 <p align="center">
   <a href="https://playwright.dev/">
@@ -37,7 +37,6 @@
 ## Table of Contents
 
 - [Overview](#overview)
-- [Architecture](#architecture)
 - [Project Structure](#project-structure)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
@@ -67,32 +66,6 @@ This framework automates end-to-end UI testing for [OrangeHRM](https://www.orang
 | Orchestration | Kubernetes (Kind in CI) |
 | CI/CD | GitHub Actions |
 | Reporting | Playwright HTML Reporter + GitHub Artifacts |
-
----
-
-## Architecture
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│                        Test Specs                            │
-│              tests/Login/    tests/PIM/                      │
-└──────────────────────┬───────────────────────────────────────┘
-                       │ use
-┌──────────────────────▼───────────────────────────────────────┐
-│                   Custom Fixtures                            │
-│                  fixtures/loginFixture.ts                    │
-└──────────────────────┬───────────────────────────────────────┘
-                       │ use
-┌──────────────────────▼───────────────────────────────────────┐
-│                  Page Object Model                           │
-│    BasePage  →  LoginPage  /  HeaderAndMenuPage  /  PimPage  │
-└──────────────────────┬───────────────────────────────────────┘
-                       │ powered by
-┌──────────────────────▼───────────────────────────────────────┐
-│              Playwright Test Runner                          │
-│         Chromium  │  Firefox  │  WebKit                      │
-└──────────────────────────────────────────────────────────────┘
-```
 
 ---
 
@@ -162,9 +135,9 @@ npx playwright install
 All runtime settings are driven by environment variables. Copy the example below into a `.env` file at the project root (this file is git-ignored):
 
 ```dotenv
-BASE_URL=http://localhost:8200   # OrangeHRM instance URL
-USERNAME=dev_admin               # Valid admin username
-PASSWORD=Selenium@123456         # Valid admin password
+BASE_URL=<orangehrm-instance-url>   # e.g. http://localhost:8200
+USERNAME=<login-username>           # login username
+PASSWORD=<login-password>           # login password
 ```
 
 `playwright.config.ts` reads these variables via `dotenv` and applies them to every test run.
@@ -200,9 +173,6 @@ npx playwright test --headed
 
 # Run only on a single browser
 npx playwright test --project=chromium
-
-# Run with a custom base URL
-BASE_URL=https://staging.example.com npx playwright test
 
 # Open the interactive HTML report after a run
 npx playwright show-report
@@ -286,7 +256,6 @@ test('some authenticated test', async ({ loginPage }) => {
 2. Reads `USERNAME` and `PASSWORD` from environment variables
 3. Calls the `LoginPage` methods to perform login
 4. Yields the `LoginPage` instance to the test
-5. No teardown required — Playwright resets browser context per test
 
 ---
 
@@ -338,9 +307,9 @@ docker build -t pw-test:latest .
 
 # Run tests inside the container (pass env vars at runtime)
 docker run --rm \
-  -e BASE_URL=http://host.docker.internal:8200 \
-  -e USERNAME=dev_admin \
-  -e PASSWORD=Selenium@123456 \
+  -e BASE_URL=<your-orangehrm-instance-url> \
+  -e USERNAME=<your-admin-username> \
+  -e PASSWORD=<your-admin-password> \
   pw-test:latest
 ```
 
@@ -366,12 +335,12 @@ After a test run:
 - **Local:** Open `playwright-report/index.html` or run `npx playwright show-report`
 - **CI:** Download the `playwright-report` artifact from the GitHub Actions run summary (retained for 30 days)
 
-Traces (`.zip` files with DOM snapshots, network logs, and screenshots) are collected on every retry and are viewable at [trace.playwright.dev](https://trace.playwright.dev/).
+Traces (`.zip` files with DOM snapshots, network logs, and screenshots) are collected on every retry and are viewable.
 
 ---
 
 <p align="center">
-  Built with ❤️ using
+  Built using
   <a href="https://playwright.dev/">Playwright</a> ·
   <a href="https://www.typescriptlang.org/">TypeScript</a> ·
   <a href="https://docs.github.com/en/actions">GitHub Actions</a>
