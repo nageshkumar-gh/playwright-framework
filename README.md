@@ -312,7 +312,7 @@ test('some authenticated test', async ({ loginPage }) => {
 
 The GitHub Actions workflow at [.github/workflows/playwright.yml](.github/workflows/playwright.yml) runs on every push to `main` and on manual dispatch.
 
-![CI/CD Pipeline Diagram](image.png)
+![CI/CD Pipeline Diagram]()
 
 ### Required GitHub Secrets
 
