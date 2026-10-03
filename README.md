@@ -1,6 +1,6 @@
 # playwright-framework
 
-> UI test automation platform built with **Playwright & TypeScript**, targeting **OrangeHRM** — a real-world HR management application. Tests run locally, in **Docker**, and inside a **Kubernetes** cluster via **GitHub Actions** CI/CD.
+> UI and API test automation platform built with **Playwright & TypeScript**, targeting **OrangeHRM** for UI and REST endpoints for API validation. Tests run locally, in **Docker**, and inside a **Kubernetes** cluster via **GitHub Actions** CI/CD.
 
 <p align="center">
   <a href="https://playwright.dev/">
@@ -54,7 +54,7 @@
 
 ## Overview
 
-This framework automates end-to-end UI testing for [OrangeHRM](https://www.orangehrm.com/), an open-source HR management system. It is built with:
+This framework automates end-to-end UI testing for [OrangeHRM](https://www.orangehrm.com/) and API testing for REST services. It is built with:
 
 | Layer | Technology |
 |-------|-----------|
@@ -86,6 +86,8 @@ playwright-framework/
 ├── tests/                        # Test specifications
 │   ├── Login/
 │   │   └── login.spec.ts         # Login / logout / session test cases
+│   ├── API/
+│   │   └── api.spec.ts           # API tests using Playwright request context
 │   └── PIM/
 │       └── pim.spec.ts           # Employee creation test cases
 ├── test-data/
@@ -142,6 +144,8 @@ PASSWORD=<login-password>           # login password
 
 `playwright.config.ts` reads these variables via `dotenv` and applies them to every test run.
 
+The sample API spec uses a local mock HTTP server so it can run reliably in offline or CI-restricted environments.
+
 ### Key Playwright Settings
 
 | Setting | Value |
@@ -167,6 +171,12 @@ npx playwright test
 
 # Run a specific spec file
 npx playwright test tests/Login/login.spec.ts
+
+# Run API tests
+npx playwright test tests/API/api.spec.ts
+
+# Run all API specs via npm script
+npm run test:api
 
 # Run in headed mode (watch the browser)
 npx playwright test --headed
@@ -197,6 +207,12 @@ npx playwright show-report
 | # | Test Case | Description |
 |---|-----------|-------------|
 | 1 | Admin can add a new employee | Navigates to PIM, fills employee details with dynamically generated data, and verifies the success notification |
+
+### API Tests — `tests/API/api.spec.ts`
+
+| # | Test Case | Description |
+|---|-----------|-------------|
+| 1 | GET post payload validation | Calls `/posts/1` and validates response status and payload structure |
 
 ---
 
